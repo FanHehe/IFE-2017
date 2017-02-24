@@ -1,0 +1,68 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>no-1-threejs 小车</title>
+		<style>
+			html, body{ height: 100%; }
+			body { margin: 0; display: flex; align-items: center; justify-content: center; }
+		</style>
+	</head>
+	<body>
+		<canvas id = "canvas" ></canvas>
+		<script src="http://cdn.bootcss.com/three.js/r83/three.min.js"></script>
+		<!-- <script src = "../../bower_components/threejs/build/three.min.js"></script> -->
+		<script>
+			window.onload = function (event) {
+				// configuration
+				var car = { wheels: [] };
+				var size = { width: 400, height: 300 };
+				var body = {
+					position: {},
+					size: { x: 100, y: 40, z: 60 },
+				}
+				var wheel = {
+					size: { R: 10, r: 2, RS: 20, rS: 20 },
+					position: [{
+						x: 30, y: -20, z: 30
+					}, {
+						x: -30, y: -20, z: -30
+					}, {
+						x: -30, y: -20, z: 30
+					}, {
+						x: 30, y: -20, z: -30
+					}]
+				};
+				var canvas = document.getElementById('canvas');
+				canvas.width = size.width;
+				canvas.height = size.height;
+				var world = new THREE.WebGLRenderer({
+					canvas: canvas
+				});
+				world.setClearColor(0x000000);
+				var scene = new THREE.Scene();
+				var camera = new THREE.PerspectiveCamera(45, size.width / size.height, 1, 1000);
+				camera.position.set(100, 100, 150);
+				camera.lookAt(new THREE.Vector3(0, 0, 0));
+				var material = new THREE.MeshBasicMaterial({
+					color: 0xffffff,
+					wireframe: true
+				});
+				car.bodyGeo = new THREE.CubeGeometry(body.size.x, body.size.y, body.size.z);
+				car.body = new THREE.Mesh(car.bodyGeo, material);
+
+				car.wheelGeo = new THREE.TorusGeometry(wheel.size.R, wheel.size.r, wheel.size.RS, wheel.size.rS);
+				// 四个轮子
+				car.wheels.push(new THREE.Mesh(car.wheelGeo, material));
+				car.wheels.push(new THREE.Mesh(car.wheelGeo, material));
+				car.wheels.push(new THREE.Mesh(car.wheelGeo, material));
+				car.wheels.push(new THREE.Mesh(car.wheelGeo, material));
+				// 轮子定位
+				car.wheels.forEach(function(e, i){ e.position.set(wheel.position[i].x, wheel.position[i].y, wheel.position[i].z)});
+				scene.add(camera);
+				scene.add(car.body);
+				scene.add(...car.wheels);
+				world.render(scene, camera);
+			};
+		</script>
+	</body>
+</html>
