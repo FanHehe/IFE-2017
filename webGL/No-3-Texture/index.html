@@ -1,0 +1,109 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>no-1-threejs 小车</title>
+		<style>
+			html, body{ height: 100%; }
+			body { margin: 0; display: flex; align-items: center; justify-content: center; }
+		</style>
+	</head>
+	<body>
+		<canvas id = "canvas" ></canvas>
+		<script src= "//cdn.bootcss.com/three.js/r83/three.min.js"></script>
+		<script src = "./Trackball.js"></script>
+		<!-- <script src = "../../bower_components/threejs/build/three.min.js"></script> -->
+		<script>
+			window.onload = function (event) {
+				// configuration
+				var car = { wheels: [] };
+				var size = { width: 400, height: 300 };
+				var body = {
+					position: {},
+					size: { x: 100, y: 40, z: 60 },
+				}
+				var wheel = {
+					size: { R: 10, r: 2, RS: 20, rS: 20 },
+					position: [{
+						x: 30, y: -20, z: 30
+					}, {
+						x: -30, y: -20, z: -30
+					}, {
+						x: -30, y: -20, z: 30
+					}, {
+						x: 30, y: -20, z: -30
+					}]
+				};
+				var canvas = document.getElementById('canvas');
+				canvas.width = size.width;
+				canvas.height = size.height;
+				var world = new THREE.WebGLRenderer({
+					canvas: canvas
+				});
+				// 定义
+				var scene = new THREE.Scene();
+				var light = new THREE.DirectionalLight(0xffffff, 1);
+				var material = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
+				var camera = new THREE.PerspectiveCamera(45, size.width / size.height, 1, 1000);
+				var plane = new THREE.Mesh(
+						new THREE.PlaneGeometry(400, 400),
+						new THREE.MeshLambertMaterial({ color: 0xffffff })
+					);
+				var controls = new THREE.TrackballControls( camera );
+				controls.addEventListener('change', render);
+				// 形状
+				car.bodyGeo = new THREE.CubeGeometry(body.size.x, body.size.y, body.size.z);
+				car.wheelGeo = new THREE.TorusGeometry(wheel.size.R, wheel.size.r, wheel.size.RS, wheel.size.rS);
+				// 车身
+				car.body = new THREE.Mesh(car.bodyGeo, material);
+				// 四个轮子
+				car.wheels.push(new THREE.Mesh(car.wheelGeo, material));
+				car.wheels.push(new THREE.Mesh(car.wheelGeo, material));
+				car.wheels.push(new THREE.Mesh(car.wheelGeo, material));
+				car.wheels.push(new THREE.Mesh(car.wheelGeo, material));
+				// 轮子定位
+				car.wheels.forEach(function(e, i) {
+					e.castShodow = true;
+					e.position.set(wheel.position[i].x, wheel.position[i].y, wheel.position[i].z);
+				});
+				// 设置-世界
+				world.setClearColor(0x666666);
+				world.shadowMap.soft = true;
+				world.shadowMap.enabled = true;
+				// 设置-相机
+				camera.position.set(100, 100, 150);
+				camera.lookAt(new THREE.Vector3(0, 0, 0));
+				plane.rotation.x = - Math.PI / 2;
+				plane.position.y = -30;
+				plane.receiveShadow = true;
+				car.body.castShodow = true;
+				// 设置-光
+				light.castShodow = true;
+				light.position.set(-5, 2, 3);
+				light.shadow.camera.near = 0;
+				light.shadow.camera.far = 200;
+				light.shadow.camera.left = -400;
+				light.shadow.camera.right = 400;
+				light.shadow.camera.top = 300;
+				light.shadow.camera.bottom = -300;
+				light.shadow.camera = true;
+				// 添加
+				scene.add(camera);
+				scene.add(light);
+				scene.add(plane);
+				scene.add(car.body);
+				// scene.add(...car.wheels);
+				car.wheels.forEach(function(item) { scene.add(item); });
+				world.render(scene, camera);
+
+				animate();
+				function animate () {
+					requestAnimationFrame( animate );
+					controls.update();
+				}
+				function render () {
+					world.render(scene, camera);
+				}
+			};
+		</script>
+	</body>
+</html>
