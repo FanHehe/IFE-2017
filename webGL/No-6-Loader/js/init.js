@@ -72,14 +72,14 @@ function loadCar () {
 function loadCarWithMaterial () {
 	var objLoader = new THREE.OBJLoader();
 	var mtlLoader = new THREE.MTLLoader();
-	objLoader.setPath('//og04901z9.bkt.clouddn.com/');
-	mtlLoader.setPath('//og04901z9.bkt.clouddn.com/');
+	objLoader.setPath('http://og04901z9.bkt.clouddn.com/');
+	mtlLoader.setPath('http://og04901z9.bkt.clouddn.com/');
 	mtlLoader.load('file.mtl', function ( materials) {
 		materials.preload();
 		objLoader.setMaterials(materials);
 		objLoader.load('file.obj', function (obj) {
 			document.querySelector('.loading').classList.toggle('hide');
-			window.car = obj;
+			window.g.car = obj;
 			obj.scale.set(50, 50, 50);
 			obj.castShadow = true;
 			obj.receiveShadow = true;
