@@ -1,0 +1,31 @@
+<html>
+	<head>
+		<title>标签云</title>
+	</head>
+	<body>
+		<div id = "cloud"></div>
+		<style>
+			body { margin: 0; }
+		</style>
+		<link rel = "stylesheet" href= "assets/TCloud.css">
+		<script src = "assets/TCloud.js"></script>
+		<script>
+			var init = function (e) {
+				var cloud = new TCloud({
+					data: [1,2,3],
+					style: 'shpere',
+					width: 400,
+					height: 400,
+				});
+				cloud.insertInto('#cloud');
+			};
+			window.addEventListener('load', init, false);
+		</script>
+		<style>
+			#cloud {
+				width: 400px;
+				height: 400px;
+			}
+		</style>
+	</body>
+</html>

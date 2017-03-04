@@ -1,0 +1,43 @@
+<html>
+	<head>
+		<title>巨大画布</title>
+	</head>
+	<body>
+		<canvas id = "canvas"></canvas>
+		<canvas id = "thumb"></canvas>
+		<style>
+			body { margin: 0; }
+			#thumb {
+				position: fixed;
+				top: 0;
+				right: 0;
+			}
+		</style>
+		<script>
+			function init () {
+				var cvs = document.querySelector("#canvas");
+				cvs.width = window.innerWidth;
+				cvs.height = window.innerHeight;
+				var ctx = window.ctx = cvs.getContext('2d');
+				var image = new Image();
+				image.src = 'http://img.hb.aicdn.com/af1788802f4367cdeab0536545e9886f149ea54d2a1a6-JaXF2N_fw658';
+				image.onload = function () { ctx.drawImage(image, 0, 0, cvs.width, cvs.height); }
+				// ctx.lineWidth = 1.0;
+				// ctx.fillStyle = '#ffee00';
+				// ctx.strokeStyle = '#cccccc';
+				// ctx.beginPath();
+				// ctx.moveTo(20, 20);
+				// ctx.lineTo(40, 20);
+				// ctx.lineTo(40, 40);
+				// ctx.lineTo(20, 40);
+				// ctx.closePath();
+				// ctx.stroke();
+				// ctx.fill();
+			}
+			function resize () {
+			}
+			window.addEventListener('load', init, false);
+			window.addEventListener('resize', resize, false);
+		</script>
+	</body>
+</html>
