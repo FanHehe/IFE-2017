@@ -1,0 +1,185 @@
+<!--
+	webwork， 阻塞， 拆分
+-->
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<body>
+
+	<style>
+		body {
+
+		}
+
+		.target {
+			width: 100px;
+			height: 100px;
+			background-color: red;
+			margin-bottom: 10px;
+		}
+
+		button {
+			font-size: 16px;
+		}
+	</style>
+
+
+	<div class="target"></div>
+	<button class="click1">阻塞主线程</button>
+	<button class="click2">WebWorker</button>
+	<button class="click3">任务拆分</button>
+	<div class="res">
+	</div>
+
+	<script>
+
+		var timer = {
+			save: function() {
+				this.last = Date.now();
+			},
+
+			clock: function() {
+				return Date.now() - this.last;
+			}
+		};
+
+
+		(function() {
+			'use strict';
+
+			const MAX = 4000000;
+
+			var target = document.querySelector('.target');
+			var res = document.querySelector('.res');
+			var click1 = document.querySelector('.click1');
+			var click2 = document.querySelector('.click2');
+			var click3 = document.querySelector('.click3');
+//    var width = document.documentElement.clientWidth - 100;
+var width = 400;
+
+var last = Date.now();
+
+function run() {
+	var now = Date.now();
+	var percent = (now - last) / 11390 % 1;
+	var x = percent * width;
+	target.style.transform = 'translate(' + x + 'px, 0)';
+	requestAnimationFrame(run);
+}
+
+run();
+
+(function() {
+
+	var blob = new Blob(['var solve = function(MAX) {var k = MAX + 1;var sum = 0;while (k) {k--;sum += Math.random();}return sum / MAX;};onmessage = function(e) {postMessage(solve(e.data));};']);
+	var blobURL = window.URL.createObjectURL(blob);
+
+	var worker = new Worker(blobURL);
+
+	worker.onmessage = function(e) {
+		var d = timer.clock();
+		var data = e.data.toFixed(2);
+		res.innerHTML += `<p>${data} worker ${d}ms</p>`
+	};
+
+	click2.onclick = function() {
+		timer.save();
+		worker.postMessage(MAX);
+	}
+
+})();
+
+
+(function() {
+
+	var solve = (function() {
+
+		var waitList = [];
+		var cb;
+
+		function run(sum) {
+			if (waitList.length === 0) {
+				cb && cb(sum / MAX);
+			} else {
+				sum += waitList.shift()();
+				requestAnimationFrame(run.bind(this, sum));
+			}
+		}
+
+		let solveFrame = function(k) {
+
+			var sum = 0;
+			while (k) {
+				k--;
+				sum += Math.random();
+			}
+			return sum;
+
+		};
+
+		return function(callback) {
+			var k = 40;
+			const K = k;
+			while (k) {
+				k--;
+				waitList.push(solveFrame.bind(this, MAX / K));
+			}
+			cb = callback;
+			run(0);
+		}
+
+	})();
+
+
+	click3.onclick = function() {
+
+		timer.save();
+
+		solve(function(r) {
+			var s = r.toFixed(2);
+			var d = timer.clock();
+			res.innerHTML += `<p>${s} 任务拆分 ${d}ms</p>`
+		});
+
+	};
+
+})();
+
+(function() {
+
+	var solve = function() {
+
+		var k = MAX + 1;
+
+		var sum = 0;
+
+		while (k) {
+			k--;
+			sum += Math.random();
+		}
+
+		return sum / MAX;
+	};
+
+
+	click1.onclick = function() {
+		timer.save();
+		var r = solve().toFixed(2);
+		var d = timer.clock();
+		res.innerHTML += `<p>${r} 阻塞式 ${d}ms</p>`
+	};
+
+
+})();
+
+
+})();
+
+</script>
+
+
+</body>
+</html>

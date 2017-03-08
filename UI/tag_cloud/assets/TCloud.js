@@ -16,8 +16,21 @@ TCloud.prototype.init = function () {
 	this.cloud.innerHTML = this.list.join('');
 };
 TCloud.prototype.sphere = function () {
+	const r = 150;
 	const { width, height }= this.size;
-
+	const i = 0;
+	const phi = 0;
+	const theta = 0;
+	const max = this.list.length + 1;
+	while (i++ < max) {
+		phi = Math.acos(-1 + (2 * i - 1) / max);
+		theta = Math.sqrt(max * Math.PI) * phi;
+		tags[i - 1].cx = r * Math.cos(theta) * Math.sin(phi);
+		tags[i - 1].cy = r * Math.sin(theta) * Math.sin(phi);
+		tags[i - 1].cz = r * Math.cos(phi); 
+		// tags[i - 1].h = jQuery(tags[i - 1]).height() / 4;
+		// tags[i - 1].w = jQuery(tags[i - 1]).width() / 4;
+	}
 }
 TCloud.prototype.insertInto = function (id) {
 	var selector = id && id[0] === '#' ? id : '#' + id;

@@ -5,39 +5,173 @@
 	<body>
 		<canvas id = "canvas"></canvas>
 		<canvas id = "thumb"></canvas>
+		<canvas id = "hidden"></canvas>
 		<style>
-			body { margin: 0; }
+			body { margin: 0; display: flex; height: 100%; align-content: center; justify-content: center; overflow: hidden; }
 			#thumb {
 				position: fixed;
 				top: 0;
 				right: 0;
+				z-index: 1;
 			}
+			#hidden { display: none }
 		</style>
 		<script>
-			function init () {
-				var cvs = document.querySelector("#canvas");
-				cvs.width = window.innerWidth;
-				cvs.height = window.innerHeight;
-				var ctx = window.ctx = cvs.getContext('2d');
-				var image = new Image();
-				image.src = 'http://img.hb.aicdn.com/af1788802f4367cdeab0536545e9886f149ea54d2a1a6-JaXF2N_fw658';
-				image.onload = function () { ctx.drawImage(image, 0, 0, cvs.width, cvs.height); }
-				// ctx.lineWidth = 1.0;
-				// ctx.fillStyle = '#ffee00';
-				// ctx.strokeStyle = '#cccccc';
-				// ctx.beginPath();
-				// ctx.moveTo(20, 20);
-				// ctx.lineTo(40, 20);
-				// ctx.lineTo(40, 40);
-				// ctx.lineTo(20, 40);
-				// ctx.closePath();
-				// ctx.stroke();
-				// ctx.fill();
-			}
-			function resize () {
-			}
-			window.addEventListener('load', init, false);
-			window.addEventListener('resize', resize, false);
+			(function (w, d) {
+
+				const maxSize = { width: 1024, height: 768 };
+				const thumbSize = { width: 128, height: 128, step: 40 };
+				const hiddenSize = { width: 19200, height: 10800 };
+
+				const size =  window.size =  {
+					width: Math.min(maxSize.width, window.innerWidth),
+					height: Math.min(maxSize.height, window.innerHeight)
+				};
+
+				const cvsThumb = d.querySelector('#thumb');
+				const cvsHidden = d.querySelector('#hidden');
+				const cvsCanvas = d.querySelector('#canvas');
+
+				const ctxThumb = cvsThumb.getContext('2d');
+				const ctxHidden = cvsHidden.getContext('2d');
+				const ctxCanvas = cvsCanvas.getContext('2d');
+
+				const state = {
+					isClicked: false,
+					mousePos: { x: 0, y: 0, prevX: 0, prevY: 0, sumX: 0, sumY: 0 },
+				};
+
+				function init() {
+					new Promise(initHidden).then(data => initCanvas()).then(data => initThumb());
+				}
+				function initHidden (r) {
+					const cvs = cvsHidden;
+					const ctx = ctxHidden;
+
+					cvs.width = hiddenSize.width;
+					cvs.height = hiddenSize.height;
+
+					const image = new Image();
+					image.src = 'http://img.hb.aicdn.com/af1788802f4367cdeab0536545e9886f149ea54d2a1a6-JaXF2N_fw658';
+					image.onload = function () { ctx.drawImage(image, 0, 0, cvs.width, cvs.height); if (r) r(); };
+				};
+				
+				function initThumb() {
+					const cvs = cvsThumb;
+					const ctx = ctxThumb;
+
+					cvs.width = thumbSize.width;
+					cvs.height = thumbSize.height;
+
+					ctx.strokeStyle = 0xff0000;
+					ctx.drawImage(cvsHidden, 0, 0, cvs.width, cvs.height);
+					ctx.beginPath();
+					ctx.moveTo(0, 0);
+					ctx.lineTo(40, 0);
+					ctx.lineTo(40, 40);
+					ctx.lineTo(0, 40);
+					ctx.closePath();
+					ctx.stroke();
+				}
+
+				function initCanvas () {
+					const cvs = cvsCanvas;
+					const ctx = ctxCanvas;
+
+					cvs.width =  size.width;
+					cvs.height = size.height;
+
+					cvs.addEventListener('mouseup', function () {
+						state.isClicked = false;
+						state.mousePos.x = 0;
+						state.mousePos.y = 0;
+						state.mousePos.prevX = 0;
+						state.mousePos.prevY = 0;
+					}, false);
+					cvs.addEventListener('mousedown', function () { state.isClicked = true; }, false);
+					cvs.addEventListener('mousemove', function (e) {
+						if (!state.isClicked) return false;
+						if (!state.mousePos.x)
+						return (state.mousePos.x = e.pageX - this.offsetLeft) && (state.mousePos.y = e.pageY - this.offsetTop);
+
+						state.mousePos.prevX = state.mousePos.x;
+						state.mousePos.prevY = state.mousePos.y;
+
+						state.mousePos.x = e.pageX - this.offsetLeft;
+						state.mousePos.y = e.pageY - this.offsetTop;
+
+						paint();
+					}, false);
+
+					repaint();
+				}
+
+				function resize () {
+					size.width = Math.min(maxSize.width, window.innerWidth);
+					size.height = Math.min(maxSize.height, window.innerHeight);
+					cvsCanvas.width = size.width;
+					cvsCanvas.height = size.height;
+					repaint();
+				}
+				function paint () {
+					let { x, y, prevX, prevY, sumX, sumY } = state.mousePos;
+					sumX += (prevX - x);
+					sumY += (prevY - y);
+
+					sumX = sumX < 0 ? 0 : sumX;
+					sumY = sumY < 0 ? 0 : sumY;
+
+					state.mousePos.sumX = sumX;
+					state.mousePos.sumY = sumY;
+
+					repaint(sumX, sumY);
+
+				}
+				function repaintThumb () {
+					const cvs = cvsThumb;
+					const ctx = ctxThumb;
+					const step = thumbSize.step;
+
+					const startX = state.mousePos.sumX / hiddenSize.width * thumbSize.width;
+					const startY = state.mousePos.sumY / hiddenSize.height * thumbSize.height;
+
+					ctx.strokeStyle = 0xff0000;
+					ctx.drawImage(cvsHidden, 0, 0, cvs.width, cvs.height);
+					ctx.beginPath();
+					ctx.moveTo(startX, startY);
+					ctx.lineTo(startX + step, startY);
+					ctx.lineTo(startX + step, startY + step);
+					ctx.lineTo(startX, startY + step);
+					ctx.closePath();
+					ctx.stroke();
+				}
+				function repaint (l, t, w, h) {
+					const cvs = cvsCanvas;
+					const ctx = ctxCanvas;
+
+					l = l || 0;
+					t = t || 0;
+					w = w || cvs.width;
+					h = h || cvs.height;
+					repaintThumb();
+					ctx.clearRect(0, 0, size.width, size.height);
+					ctx.drawImage(cvsHidden, l, t, w, h, 0, 0, cvs.width, cvs.height);
+				};
+
+				// function Thumb (width = 256, height = 256) {
+				// 	if (!(this instanceof Thumb)) return new Thumb;
+				// 	this.width = width;
+				// 	this.height = height;
+				// 	this.origin = null;
+				// 	this.container = null;
+				// };
+				// Thumb.prototype.init = function () {
+				// 	this.cvs = document.createElement('canvas');
+				// 	this.ctx = this.cvs.getContext('2d');
+				// };
+				window.addEventListener('load', init, false);
+				window.addEventListener('resize', resize, false);
+			}) (window, document);
 		</script>
 	</body>
 </html>
